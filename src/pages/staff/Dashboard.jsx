@@ -7,26 +7,78 @@ import CountUp from 'react-countup'
 import Header from '../../components/layout/Header'
 import Footer from '../../components/layout/Footer'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
-import { staffService } from '../../services/staffService'
+import { useAuth } from '../../contexts/AuthContext'
 
 const StaffDashboard = () => {
+  const { user } = useAuth()
   const queryClient = useQueryClient()
 
-  // Fetch staff schedule
+  // Fetch staff schedule from API
   const { data: scheduleData, isLoading } = useQuery(
     'staff-schedule',
-    () => staffService.getStaffSchedule(),
+    async () => {
+      const formData = new FormData()
+      formData.append('user_id', user?.id)
+      formData.append('role', user?.role)
+      formData.append('csrf_token', localStorage.getItem('auth_token'))
+
+      const response = await fetch('http://localhost/senior-nooralshams/api/Staff/viewStaffSchedule.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+
+      const result = await response.json()
+      
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'Failed to fetch schedule')
+      }
+
+      return result
+    },
     {
       refetchOnWindowFocus: false,
+      enabled: !!user?.id,
+      onError: (error) => {
+        console.error('Error fetching schedule:', error)
+        toast.error('فشل في تحميل الجدول')
+      }
     }
   )
 
   // Check-in mutation
   const checkInMutation = useMutation(
-    () => staffService.checkIn(),
+    async () => {
+      const formData = new FormData()
+      formData.append('user_id', user?.id)
+      formData.append('role', user?.role)
+      formData.append('csrf_token', localStorage.getItem('auth_token'))
+
+      const response = await fetch('http://localhost/senior-nooralshams/api/Staff/check_in.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+
+      const result = await response.json()
+      
+      if (result.status !== 'success!' && result.status !== 'success') {
+        throw new Error(result.message || 'Failed to check in')
+      }
+
+      return result
+    },
     {
-      onSuccess: () => {
-        toast.success('تم تسجيل الحضور بنجاح!')
+      onSuccess: (data) => {
+        toast.success(data.message || 'تم تسجيل الحضور بنجاح!')
         queryClient.invalidateQueries('staff-attendance')
       },
       onError: (error) => {
@@ -37,10 +89,33 @@ const StaffDashboard = () => {
 
   // Check-out mutation
   const checkOutMutation = useMutation(
-    () => staffService.checkOut(),
+    async () => {
+      const formData = new FormData()
+      formData.append('user_id', user?.id)
+      formData.append('role', user?.role)
+      formData.append('csrf_token', localStorage.getItem('auth_token'))
+
+      const response = await fetch('http://localhost/senior-nooralshams/api/Staff/check_out.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+
+      const result = await response.json()
+      
+      if (result.status !== 'success!' && result.status !== 'success') {
+        throw new Error(result.message || 'Failed to check out')
+      }
+
+      return result
+    },
     {
-      onSuccess: () => {
-        toast.success('تم تسجيل الانصراف بنجاح!')
+      onSuccess: (data) => {
+        toast.success(data.message || 'تم تسجيل الانصراف بنجاح!')
         queryClient.invalidateQueries('staff-attendance')
       },
       onError: (error) => {
@@ -49,8 +124,51 @@ const StaffDashboard = () => {
     }
   )
 
-  const schedule = scheduleData?.data || {}
-  const todayAppointments = schedule[new Date().toISOString().split('T')[0]] || []
+  // Update booking status mutation
+  const updateBookingStatusMutation = useMutation(
+    async ({ appointmentId, status }) => {
+      const formData = new FormData()
+      formData.append('user_id', user?.id)
+      formData.append('role', user?.role)
+      formData.append('appointment_id', appointmentId)
+      formData.append('status', status)
+      formData.append('csrf_token', localStorage.getItem('auth_token'))
+
+      const response = await fetch('http://localhost/senior-nooralshams/api/Staff/staffUpdateBookingStatus.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+
+      const result = await response.json()
+      
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'Failed to update booking status')
+      }
+
+      return result
+    },
+    {
+      onSuccess: () => {
+        toast.success('تم تحديث حالة الموعد بنجاح')
+        queryClient.invalidateQueries('staff-schedule')
+      },
+      onError: (error) => {
+        toast.error(error.message || 'فشل في تحديث حالة الموعد')
+      }
+    }
+  )
+
+  const appointments = scheduleData?.data || []
+  const todayAppointments = appointments.filter(appointment => {
+    const appointmentDate = new Date(appointment.date).toDateString()
+    const today = new Date().toDateString()
+    return appointmentDate === today
+  })
 
   const stats = [
     {
@@ -89,6 +207,10 @@ const StaffDashboard = () => {
 
   const handleCheckOut = () => {
     checkOutMutation.mutate()
+  }
+
+  const handleStatusUpdate = (appointmentId, status) => {
+    updateBookingStatusMutation.mutate({ appointmentId, status })
   }
 
   if (isLoading) {
@@ -187,7 +309,7 @@ const StaffDashboard = () => {
             <div className="space-y-4">
               {todayAppointments.map((appointment) => (
                 <div
-                  key={appointment.id}
+                  key={appointment.appointment_id}
                   className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
                 >
                   <div className="flex items-center space-x-4 space-x-reverse">
@@ -197,7 +319,7 @@ const StaffDashboard = () => {
                     <div>
                       <h3 className="font-semibold text-gray-900">{appointment.client_name}</h3>
                       <p className="text-gray-600 text-sm">{appointment.service_name}</p>
-                      <p className="text-gray-500 text-sm">{appointment.appointment_time}</p>
+                      <p className="text-gray-500 text-sm">{appointment.time}</p>
                     </div>
                   </div>
                   
@@ -220,18 +342,9 @@ const StaffDashboard = () => {
                     {appointment.status !== 'completed' && (
                       <select
                         value={appointment.status}
-                        onChange={(e) => {
-                          // Handle status update
-                          staffService.updateBookingStatus(appointment.id, e.target.value)
-                            .then(() => {
-                              toast.success('تم تحديث حالة الموعد')
-                              queryClient.invalidateQueries('staff-schedule')
-                            })
-                            .catch(() => {
-                              toast.error('فشل في تحديث حالة الموعد')
-                            })
-                        }}
+                        onChange={(e) => handleStatusUpdate(appointment.appointment_id, e.target.value)}
                         className="text-sm border border-gray-300 rounded px-2 py-1"
+                        disabled={updateBookingStatusMutation.isLoading}
                       >
                         <option value="pending">في الانتظار</option>
                         <option value="confirmed">مؤكد</option>

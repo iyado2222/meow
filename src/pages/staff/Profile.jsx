@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { User, Mail, Phone, Calendar, Edit, Save, X, Briefcase, DollarSign } from 'lucide-react'
@@ -12,7 +12,6 @@ import { useAuth } from '../../contexts/AuthContext'
 const StaffProfile = () => {
   const [isEditing, setIsEditing] = useState(false)
   const { user } = useAuth()
-  const [loading, setLoading] = useState(true)
 
   const {
     register,
@@ -22,28 +21,32 @@ const StaffProfile = () => {
     setValue,
   } = useForm()
 
-  // Fetch staff profile data
+  // Fetch staff profile data from API
   const { data: staffData, isLoading: profileLoading, refetch } = useQuery(
     'staff-profile',
     async () => {
-      // In a real implementation, this would be an API call
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Return mock data
-      return {
-        status: 'success',
-        data: {
-          full_name: user?.full_name || 'Test Staff',
-          email: user?.email || 'staff@example.com',
-          phone: '0591234567',
-          dob: '1990-01-01',
-          salary_per_hour: 50,
-          notes: 'Specializes in facial treatments and henna design',
-          hire_date: '2023-05-15',
-          specialties: ['Facial Treatment', 'Henna Design']
-        }
+      const formData = new FormData()
+      formData.append('user_id', user?.id)
+      formData.append('role', user?.role)
+      formData.append('csrf_token', localStorage.getItem('auth_token'))
+
+      const response = await fetch('http://localhost/senior-nooralshams/api/Profile/viewStaffProfile.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
       }
+
+      const result = await response.json()
+      
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'Failed to fetch profile')
+      }
+
+      return result
     },
     {
       enabled: !!user,
@@ -55,15 +58,12 @@ const StaffProfile = () => {
           setValue('phone', profile.phone)
           setValue('dob', profile.dob)
           setValue('notes', profile.notes)
-          setLoading(false)
         } else {
           toast.error(data.message || 'فشل تحميل البيانات')
-          setLoading(false)
         }
       },
       onError: () => {
         toast.error('حدث خطأ أثناء تحميل البيانات')
-        setLoading(false)
       }
     }
   )
@@ -71,16 +71,31 @@ const StaffProfile = () => {
   // Update profile mutation
   const updateProfileMutation = useMutation(
     async (profileData) => {
-      // In a real implementation, this would be an API call
-      console.log('Updating staff profile:', profileData)
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
-      return {
-        status: 'success',
-        message: 'تم تحديث الملف الشخصي بنجاح'
+      const formData = new FormData()
+      formData.append('user_id', user?.id)
+      formData.append('role', user?.role)
+      formData.append('csrf_token', localStorage.getItem('auth_token'))
+      formData.append('full_name', profileData.full_name)
+      formData.append('phone', profileData.phone)
+      formData.append('dob', profileData.dob)
+
+      const response = await fetch('http://localhost/senior-nooralshams/api/Profile/updateStaffProfile.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
       }
+
+      const result = await response.json()
+      
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'Failed to update profile')
+      }
+
+      return result
     },
     {
       onSuccess: (data) => {
@@ -118,7 +133,7 @@ const StaffProfile = () => {
           <p className="text-gray-600">إدارة معلوماتك كموظف</p>
         </motion.div>
 
-        {loading || profileLoading ? (
+        {profileLoading ? (
           <div className="flex justify-center items-center h-40">
             <LoadingSpinner />
           </div>
@@ -135,34 +150,19 @@ const StaffProfile = () => {
                 <div className="space-y-2 text-sm text-gray-500">
                   <div className="flex items-center justify-center space-x-2 space-x-reverse">
                     <Briefcase className="w-4 h-4" />
-                    <span>موظف منذ {new Date(profile.hire_date).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long' })}</span>
+                    <span>موظف</span>
                   </div>
-                  <div className="flex items-center justify-center space-x-2 space-x-reverse">
-                    <DollarSign className="w-4 h-4" />
-                    <span>الراتب بالساعة: {profile.salary_per_hour} ₪</span>
-                  </div>
+                  {profile.salary_per_hour && (
+                    <div className="flex items-center justify-center space-x-2 space-x-reverse">
+                      <DollarSign className="w-4 h-4" />
+                      <span>الراتب بالساعة: {profile.salary_per_hour} ₪</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-center space-x-2 space-x-reverse">
                     <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                     <span>نشط</span>
                   </div>
                 </div>
-
-                {/* Specialties */}
-                {profile.specialties && profile.specialties.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">التخصصات</h3>
-                    <div className="flex flex-wrap justify-center gap-2">
-                      {profile.specialties.map((specialty, index) => (
-                        <span 
-                          key={index} 
-                          className="bg-primary-100 text-primary-200 text-xs px-2 py-1 rounded-full"
-                        >
-                          {specialty}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Work Statistics */}
@@ -176,15 +176,15 @@ const StaffProfile = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">المواعيد المكتملة</span>
-                    <span className="font-bold text-primary-200">42</span>
+                    <span className="font-bold text-primary-200">-</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">ساعات العمل (الشهر الحالي)</span>
-                    <span className="font-bold text-primary-200">120</span>
+                    <span className="font-bold text-primary-200">-</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">تقييم العملاء</span>
-                    <span className="font-bold text-primary-200">4.8/5</span>
+                    <span className="font-bold text-primary-200">-</span>
                   </div>
                 </div>
               </motion.div>
@@ -269,14 +269,14 @@ const StaffProfile = () => {
                     </div>
                   </div>
 
-                  {/* Notes */}
+                  {/* Notes (read-only) */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">ملاحظات</label>
                     <textarea
                       {...register('notes')}
                       rows="3"
-                      disabled={!isEditing}
-                      className={`input-field w-full ${!isEditing ? 'bg-gray-50' : ''}`}
+                      disabled
+                      className="input-field w-full bg-gray-50"
                       placeholder="ملاحظات إضافية..."
                     />
                   </div>
@@ -311,15 +311,15 @@ const StaffProfile = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">مواعيد اليوم</span>
-                    <span className="font-bold text-primary-200">3</span>
+                    <span className="font-bold text-primary-200">-</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">مواعيد الأسبوع</span>
-                    <span className="font-bold text-primary-200">12</span>
+                    <span className="font-bold text-primary-200">-</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">الساعات المجدولة (الأسبوع)</span>
-                    <span className="font-bold text-primary-200">24</span>
+                    <span className="font-bold text-primary-200">-</span>
                   </div>
                 </div>
                 <div className="mt-4">

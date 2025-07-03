@@ -5,9 +5,10 @@ import { useQuery } from 'react-query'
 import Header from '../../components/layout/Header'
 import Footer from '../../components/layout/Footer'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
-import { staffService } from '../../services/staffService'
+import { useAuth } from '../../contexts/AuthContext'
 
 const StaffSchedule = () => {
+  const { user } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState('week') // 'week' or 'month'
 
@@ -42,20 +43,57 @@ const StaffSchedule = () => {
     isError, 
     refetch 
   } = useQuery(
-    ['staff-schedule', dateRange.from, dateRange.to, viewMode],
-    () => staffService.getStaffSchedule(null, dateRange.from, dateRange.to),
+    ['staff-schedule', dateRange.from, dateRange.to, viewMode, user?.id],
+    async () => {
+      const formData = new FormData()
+      formData.append('user_id', user?.id)
+      formData.append('role', user?.role)
+      formData.append('csrf_token', localStorage.getItem('auth_token'))
+
+      const response = await fetch('http://localhost/senior-nooralshams/api/Staff/viewStaffSchedule.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+
+      const result = await response.json()
+      
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'Failed to fetch schedule')
+      }
+
+      return result
+    },
     {
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
       cacheTime: 10 * 60 * 1000, // 10 minutes
       retry: 2,
+      enabled: !!user?.id,
       onError: (error) => {
         console.error('Error fetching schedule:', error)
       }
     }
   )
 
-  const schedule = scheduleData?.data || {}
+  const appointments = scheduleData?.data || []
+
+  // Group appointments by date
+  const schedule = useMemo(() => {
+    const grouped = {}
+    appointments.forEach(appointment => {
+      const date = appointment.date
+      if (!grouped[date]) {
+        grouped[date] = []
+      }
+      grouped[date].push(appointment)
+    })
+    return grouped
+  }, [appointments])
 
   // Memoized navigation function to prevent unnecessary re-renders
   const navigateDate = useCallback((direction) => {
@@ -246,12 +284,12 @@ const StaffSchedule = () => {
                     {dayAppointments.length > 0 ? (
                       dayAppointments.map((appointment) => (
                         <div
-                          key={appointment.id}
+                          key={appointment.appointment_id}
                           className="p-3 bg-gray-50 rounded-lg border-r-4 border-primary-200"
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-sm font-medium text-gray-900">
-                              {appointment.appointment_time}
+                              {appointment.time}
                             </span>
                             <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(appointment.status)}`}>
                               {getStatusLabel(appointment.status)}
@@ -307,12 +345,12 @@ const StaffSchedule = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {appointments.map((appointment) => (
                           <div
-                            key={appointment.id}
+                            key={appointment.appointment_id}
                             className="p-3 bg-gray-50 rounded-lg"
                           >
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-sm font-medium text-gray-900">
-                                {appointment.appointment_time}
+                                {appointment.time}
                               </span>
                               <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(appointment.status)}`}>
                                 {getStatusLabel(appointment.status)}

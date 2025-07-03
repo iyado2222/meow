@@ -10,8 +10,10 @@ import { useForm } from 'react-hook-form'
 import Header from '../../components/layout/Header'
 import Footer from '../../components/layout/Footer'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
+import { useAuth } from '../../contexts/AuthContext'
 
 const AdminStaff = () => {
+  const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -34,91 +36,76 @@ const AdminStaff = () => {
     setValue
   } = useForm()
 
-  // Fetch staff list
+  // Fetch staff list from API
   const { data: staffData, isLoading, isError, refetch } = useQuery(
     'staff-list',
     async () => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      return {
-        status: 'success',
-        data: [
-          {
-            staff_id: 3,
-            full_name: 'Test Staff',
-            email: 'staff@example.com',
-            phone: '0591234567',
-            dob: '1990-01-01',
-            salary_per_hour: 50,
-            notes: 'Specializes in facial treatments',
-            created_at: '2023-05-15'
-          },
-          {
-            staff_id: 4,
-            full_name: 'Lana Khalil',
-            email: 'lana.khalil@example.com',
-            phone: '0591234568',
-            dob: '1992-03-14',
-            salary_per_hour: 60,
-            notes: 'Henna & design specialist',
-            created_at: '2023-06-20'
-          },
-          {
-            staff_id: 5,
-            full_name: 'Maya Odeh',
-            email: 'maya.odeh@example.com',
-            phone: '0599876543',
-            dob: '1988-07-22',
-            salary_per_hour: 55,
-            notes: 'Facial treatment specialist',
-            created_at: '2023-04-10'
-          },
-          {
-            staff_id: 6,
-            full_name: 'Noura Hasan',
-            email: 'noura.hasan@example.com',
-            phone: '0594447777',
-            dob: '1995-11-03',
-            salary_per_hour: 65,
-            notes: 'Laser expert',
-            created_at: '2023-07-05'
-          },
-          {
-            staff_id: 7,
-            full_name: 'Rania Samir',
-            email: 'rania.samir@example.com',
-            phone: '0591122334',
-            dob: '1991-01-30',
-            salary_per_hour: 50,
-            notes: 'Junior stylist',
-            created_at: '2024-01-15'
-          }
-        ]
+      const formData = new FormData()
+      formData.append('user_id', user?.id)
+      formData.append('role', user?.role)
+      formData.append('csrf_token', localStorage.getItem('auth_token'))
+
+      const response = await fetch('http://localhost/senior-nooralshams/api/Staff/getStaffDetails.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
       }
+
+      const result = await response.json()
+      
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'Failed to fetch staff data')
+      }
+
+      return result
     },
     {
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
+      onError: (error) => {
+        console.error('Error fetching staff:', error)
+        toast.error('فشل في تحميل بيانات الموظفين')
+      }
     }
   )
 
   // Create staff mutation
   const createStaffMutation = useMutation(
     async (staffData) => {
-      // Simulate API call
-      console.log('Creating staff:', staffData)
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
-      return {
-        status: 'success',
-        message: 'تم إضافة الموظف بنجاح',
-        data: {
-          staff_id: Math.floor(Math.random() * 1000) + 100,
-          ...staffData,
-          created_at: new Date().toISOString()
-        }
+      const formData = new FormData()
+      formData.append('user_id', user?.id)
+      formData.append('role', user?.role)
+      formData.append('csrf_token', localStorage.getItem('auth_token'))
+      formData.append('full_name', staffData.full_name)
+      formData.append('email', staffData.email)
+      formData.append('password', staffData.password)
+      formData.append('password_confirm', staffData.password_confirm)
+      formData.append('phone', staffData.phone)
+      formData.append('dob', staffData.dob)
+      formData.append('salary_per_hour', staffData.salary_per_hour)
+      formData.append('notes', staffData.notes || '')
+
+      const response = await fetch('http://localhost/senior-nooralshams/api/Staff/createStaff.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
       }
+
+      const result = await response.json()
+      
+      if (result.status !== 'success!' && result.status !== 'success') {
+        throw new Error(result.message || 'Failed to create staff member')
+      }
+
+      return result
     },
     {
       onSuccess: () => {
@@ -136,14 +123,31 @@ const AdminStaff = () => {
   // Update staff mutation
   const updateStaffMutation = useMutation(
     async (staffData) => {
-      // Simulate API call
-      console.log('Updating staff:', staffData)
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
-      return {
-        status: 'success',
-        message: 'تم تحديث بيانات الموظف بنجاح'
+      const formData = new FormData()
+      formData.append('user_id', user?.id)
+      formData.append('role', user?.role)
+      formData.append('csrf_token', localStorage.getItem('auth_token'))
+      formData.append('staff_id', selectedStaff.staff_id)
+      formData.append('salary_per_hour', staffData.salary_per_hour)
+      formData.append('notes', staffData.notes || '')
+
+      const response = await fetch('http://localhost/senior-nooralshams/api/Staff/updateStaffDetails.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
       }
+
+      const result = await response.json()
+      
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'Failed to update staff member')
+      }
+
+      return result
     },
     {
       onSuccess: () => {
@@ -216,27 +220,16 @@ const AdminStaff = () => {
 
   // Handle add staff form submission
   const onSubmitAdd = (data) => {
-    createStaffMutation.mutate({
-      full_name: data.full_name,
-      email: data.email,
-      phone: data.phone,
-      dob: data.dob,
-      salary_per_hour: parseFloat(data.salary_per_hour),
-      notes: data.notes || ''
-    })
+    if (data.password !== data.password_confirm) {
+      toast.error('كلمات المرور غير متطابقة')
+      return
+    }
+    createStaffMutation.mutate(data)
   }
 
   // Handle edit staff form submission
   const onSubmitEdit = (data) => {
-    updateStaffMutation.mutate({
-      staff_id: selectedStaff.staff_id,
-      full_name: data.full_name,
-      email: data.email,
-      phone: data.phone,
-      dob: data.dob,
-      salary_per_hour: parseFloat(data.salary_per_hour),
-      notes: data.notes || ''
-    })
+    updateStaffMutation.mutate(data)
   }
 
   // Handle edit button click
@@ -245,10 +238,6 @@ const AdminStaff = () => {
     resetEdit()
     
     // Set form values
-    setValue('full_name', staff.full_name)
-    setValue('email', staff.email)
-    setValue('phone', staff.phone)
-    setValue('dob', staff.dob)
     setValue('salary_per_hour', staff.salary_per_hour)
     setValue('notes', staff.notes)
     
@@ -257,8 +246,8 @@ const AdminStaff = () => {
 
   // Handle view schedule button click
   const handleViewSchedule = (staffId) => {
-    // In a real app, this would navigate to the staff schedule page
-    toast.info(`عرض جدول الموظف رقم ${staffId}`)
+    // Navigate to staff schedule page with staff ID
+    window.open(`/staff/schedule?staff_id=${staffId}`, '_blank')
   }
 
   return (
@@ -397,15 +386,6 @@ const AdminStaff = () => {
                         {getSortDirectionIndicator('salary_per_hour')}
                       </div>
                     </th>
-                    <th 
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                      onClick={() => requestSort('created_at')}
-                    >
-                      <div className="flex items-center justify-end">
-                        <span>تاريخ التعيين</span>
-                        {getSortDirectionIndicator('created_at')}
-                      </div>
-                    </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       الإجراءات
                     </th>
@@ -437,9 +417,6 @@ const AdminStaff = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{staff.salary_per_hour} ₪</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{formatDate(staff.created_at)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2 space-x-reverse">
@@ -516,6 +493,36 @@ const AdminStaff = () => {
                   />
                 </div>
                 {errorsAdd.email && <p className="mt-1 text-sm text-red-600">{errorsAdd.email.message}</p>}
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
+                <input
+                  {...registerAdd('password', { 
+                    required: 'كلمة المرور مطلوبة',
+                    minLength: {
+                      value: 6,
+                      message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'
+                    }
+                  })}
+                  type="password"
+                  className={`input-field ${errorsAdd.password ? 'border-red-500' : ''}`}
+                  placeholder="أدخل كلمة المرور"
+                />
+                {errorsAdd.password && <p className="mt-1 text-sm text-red-600">{errorsAdd.password.message}</p>}
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">تأكيد كلمة المرور</label>
+                <input
+                  {...registerAdd('password_confirm', { required: 'تأكيد كلمة المرور مطلوب' })}
+                  type="password"
+                  className={`input-field ${errorsAdd.password_confirm ? 'border-red-500' : ''}`}
+                  placeholder="أعد إدخال كلمة المرور"
+                />
+                {errorsAdd.password_confirm && <p className="mt-1 text-sm text-red-600">{errorsAdd.password_confirm.message}</p>}
               </div>
 
               {/* Phone */}
@@ -634,75 +641,11 @@ const AdminStaff = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">تعديل بيانات الموظف</h2>
             
             <form onSubmit={handleSubmitEdit(onSubmitEdit)} className="space-y-6">
-              {/* Full Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">الاسم الكامل</label>
-                <div className="relative">
-                  <User className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    {...registerEdit('full_name', { required: 'الاسم الكامل مطلوب' })}
-                    type="text"
-                    className={`input-field pr-12 ${errorsEdit.full_name ? 'border-red-500' : ''}`}
-                    placeholder="أدخل الاسم الكامل"
-                  />
-                </div>
-                {errorsEdit.full_name && <p className="mt-1 text-sm text-red-600">{errorsEdit.full_name.message}</p>}
-              </div>
-
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">البريد الإلكتروني</label>
-                <div className="relative">
-                  <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    {...registerEdit('email', { 
-                      required: 'البريد الإلكتروني مطلوب',
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'البريد الإلكتروني غير صحيح'
-                      }
-                    })}
-                    type="email"
-                    className={`input-field pr-12 ${errorsEdit.email ? 'border-red-500' : ''}`}
-                    placeholder="أدخل البريد الإلكتروني"
-                  />
-                </div>
-                {errorsEdit.email && <p className="mt-1 text-sm text-red-600">{errorsEdit.email.message}</p>}
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">رقم الهاتف</label>
-                <div className="relative">
-                  <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    {...registerEdit('phone', { 
-                      required: 'رقم الهاتف مطلوب',
-                      pattern: {
-                        value: /^[0-9+\-\s()]+$/,
-                        message: 'رقم الهاتف غير صحيح'
-                      }
-                    })}
-                    type="tel"
-                    className={`input-field pr-12 ${errorsEdit.phone ? 'border-red-500' : ''}`}
-                    placeholder="أدخل رقم الهاتف"
-                  />
-                </div>
-                {errorsEdit.phone && <p className="mt-1 text-sm text-red-600">{errorsEdit.phone.message}</p>}
-              </div>
-
-              {/* Date of Birth */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ الميلاد</label>
-                <div className="relative">
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    {...registerEdit('dob', { required: 'تاريخ الميلاد مطلوب' })}
-                    type="date"
-                    className={`input-field pr-12 ${errorsEdit.dob ? 'border-red-500' : ''}`}
-                  />
-                </div>
-                {errorsEdit.dob && <p className="mt-1 text-sm text-red-600">{errorsEdit.dob.message}</p>}
+              {/* Staff Info Display */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-medium text-gray-900 mb-2">{selectedStaff.full_name}</h3>
+                <p className="text-sm text-gray-600">{selectedStaff.email}</p>
+                <p className="text-sm text-gray-600">{selectedStaff.phone}</p>
               </div>
 
               {/* Salary Per Hour */}
