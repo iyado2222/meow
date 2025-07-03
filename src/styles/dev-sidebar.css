@@ -1,0 +1,169 @@
+/* Development Sidebar Styles */
+.dev-sidebar {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* Custom scrollbar for sidebar */
+.dev-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.dev-sidebar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.dev-sidebar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.dev-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Development banner animation */
+@keyframes dev-banner-pulse {
+  0%, 100% {
+    background-color: #dc2626;
+  }
+  50% {
+    background-color: #ef4444;
+  }
+}
+
+.dev-banner {
+  animation: dev-banner-pulse 2s ease-in-out infinite;
+}
+
+/* Sidebar transition improvements */
+.dev-sidebar-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Route item hover effects */
+.dev-route-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.dev-route-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.dev-route-item:hover::before {
+  left: 100%;
+}
+
+/* Metrics panel styles */
+.dev-metrics-panel {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Keyboard shortcut display */
+.dev-shortcut {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-size: 10px;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Section icons */
+.dev-section-icon {
+  transition: transform 0.2s ease;
+}
+
+.dev-section-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Active route indicator */
+.dev-active-route {
+  position: relative;
+}
+
+.dev-active-route::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+  border-radius: 1px 0 0 1px;
+}
+
+/* Loading states */
+.dev-loading-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dev-sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .dev-sidebar.mobile-visible {
+    transform: translateX(0);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .dev-sidebar {
+    border-right: 2px solid #000;
+  }
+  
+  .dev-route-item:hover {
+    background: #000;
+    color: #fff;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .dev-sidebar-transition,
+  .dev-section-icon,
+  .dev-route-item::before {
+    transition: none;
+  }
+  
+  .dev-banner {
+    animation: none;
+  }
+}
+
+/* Dark mode support (if implemented) */
+@media (prefers-color-scheme: dark) {
+  .dev-sidebar {
+    background: #1f2937;
+    border-right-color: #374151;
+    color: #f9fafb;
+  }
+  
+  .dev-metrics-panel {
+    background: rgba(31, 41, 55, 0.95);
+    color: #f9fafb;
+  }
+}

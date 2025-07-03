@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from './contexts/AuthContext'
@@ -9,6 +9,10 @@ import ErrorBoundary from './components/ui/ErrorBoundary'
 import WhatsAppButton from './components/ui/WhatsAppButton'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
+
+// Development components
+import { DevSidebar } from './components/dev'
+import DevMetricsPanel from './components/dev/DevMetricsPanel'
 
 // Lazy load pages
 const LandingPage = React.lazy(() => import('./pages/LandingPage'))
@@ -33,8 +37,6 @@ const AdminStaff = React.lazy(()=> import('./pages/admin/Staff'))
 const StaffDashboard = React.lazy(() => import('./pages/staff/Dashboard'))
 const StaffSchedule = React.lazy(() => import('./pages/staff/Schedule'))
 const StaffProfile = React.lazy(() => import('./pages/staff/Profile'))
-
-
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { user, isAuthenticated, loading } = useAuth()
@@ -62,6 +64,7 @@ const pageTransition = {
 
 function App() {
   const { language } = useLanguage()
+  const [showDevMetrics, setShowDevMetrics] = useState(false)
 
   useEffect(() => {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr'
@@ -83,6 +86,15 @@ function App() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen gradient-bg">
+        {/* Development Sidebar */}
+        <DevSidebar />
+        
+        {/* Development Metrics Panel */}
+        <DevMetricsPanel 
+          isVisible={showDevMetrics}
+          onToggle={() => setShowDevMetrics(!showDevMetrics)}
+        />
+
         <Banner />
 
         <AnimatePresence mode="wait">
@@ -150,8 +162,6 @@ function App() {
                 }
               />
 
-              
-
               {/* Admin Routes */}
             <Route
               path="/admin"
@@ -211,9 +221,7 @@ function App() {
               }
             />
 
-            
-
-                          {/* Staff Routes */}
+            {/* Staff Routes */}
             <Route
               path="/staff"
               element={
@@ -238,7 +246,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
