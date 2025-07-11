@@ -220,3 +220,4 @@ The component automatically checks `NODE_ENV` and will not render in production 
 ## License
 
 This component is part of your project and follows the same license terms.
+```
