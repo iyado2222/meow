@@ -360,45 +360,7 @@ const Footer = () => {
                     </div>
                   </div>
 
-                  {/* Newsletter */}
-                  <div className="bg-gradient-to-r from-primary-200/10 to-secondary-400/10 p-4 rounded-lg border border-primary-200/20">
-                    <h4 className="font-medium mb-3 text-gray-200">اشتركي في النشرة الإخبارية</h4>
-                    <form onSubmit={handleNewsletterSubmit} className="space-y-3">
-                      <div className="relative">
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="بريدك الإلكتروني"
-                          className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:border-primary-200 text-white placeholder-gray-400 text-sm"
-                          required
-                        />
-                        <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      </div>
-                      <motion.button
-                        type="submit"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="w-full bg-gradient-to-r from-primary-200 to-secondary-400 text-white py-2 px-4 rounded-lg font-medium text-sm hover:shadow-lg transition-all duration-300 flex items-center justify-center"
-                      >
-                        {isSubscribed ? (
-                          <>
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            تم الاشتراك بنجاح!
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-4 h-4 mr-2" />
-                            اشتراك
-                          </>
-                        )}
-                      </motion.button>
-                    </form>
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-          </div>
+                 
 
           {/* Bottom Bar */}
           <motion.div 
