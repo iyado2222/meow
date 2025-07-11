@@ -257,58 +257,7 @@ const Footer = () => {
                   </div>
                 </motion.div>
 
-                {/* Quick Links */}
-                <motion.div variants={itemVariants}>
-                  <h3 className="text-lg font-semibold mb-6 flex items-center">
-                    <div className="w-1 h-6 bg-gradient-to-b from-primary-200 to-secondary-400 rounded-full mr-3" />
-                    روابط سريعة
-                  </h3>
-                  <ul className="space-y-3">
-                    {quickLinks.map((link, index) => (
-                      <motion.li
-                        key={index}
-                        whileHover={{ x: 5 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                      >
-                        <Link
-                          to={link.path}
-                          className="text-gray-300 hover:text-primary-200 transition-colors duration-200 flex items-center group"
-                        >
-                          <ChevronRight className="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                          {link.name}
-                        </Link>
-                      </motion.li>
-                    ))}
-                  </ul>
-                </motion.div>
-
-                {/* Services */}
-                <motion.div variants={itemVariants}>
-                  <h3 className="text-lg font-semibold mb-6 flex items-center">
-                    <div className="w-1 h-6 bg-gradient-to-b from-primary-200 to-secondary-400 rounded-full mr-3" />
-                    خدماتنا
-                  </h3>
-                  <ul className="space-y-3">
-                    {services.map((service, index) => (
-                      <motion.li
-                        key={index}
-                        whileHover={{ x: 5 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                        className="text-gray-300 hover:text-primary-200 transition-colors duration-200 flex items-center group cursor-pointer"
-                      >
-                        <Sparkles className="w-4 h-4 mr-2 opacity-50 group-hover:opacity-100 transition-opacity duration-200" />
-                        {service}
-                      </motion.li>
-                    ))}
-                  </ul>
-                </motion.div>
-
-                {/* Contact & Newsletter */}
-                <motion.div variants={itemVariants}>
-                  <h3 className="text-lg font-semibold mb-6 flex items-center">
-                    <div className="w-1 h-6 bg-gradient-to-b from-primary-200 to-secondary-400 rounded-full mr-3" />
-                    تواصل معنا
-                  </h3>
+               
                   
                   {/* Contact Info */}
                   <ul className="space-y-4 mb-8">
